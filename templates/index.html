@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CivicAI — Smart Civic Intelligence System</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --border: #1e1e2e;
+    --accent: #ff5f2e;
+    --accent2: #00e5bc;
+    --yellow: #f5c518;
+    --text: #e8e8f0;
+    --muted: #5a5a7a;
+    --card: #13131f;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,95,46,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,95,46,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+    height: 62px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,10,15,0.9);
+    backdrop-filter: blur(20px);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.95rem;
+    cursor: pointer;
+  }
+
+  .logo-hex {
+    width: 30px; height: 30px;
+    background: var(--accent);
+    clip-path: polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+    display: grid; place-items: center;
+    font-size: 0.65rem; font-weight: 700; color: #fff;
+  }
+
+  nav { display: flex; gap: 0.25rem; }
+
+  .nav-btn {
+    padding: 0.4rem 1rem;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+    letter-spacing: 0.04em;
+  }
+
+  .nav-btn:hover { color: var(--text); border-color: var(--border); background: var(--surface); }
+  .nav-btn.active { color: var(--accent); border-color: rgba(255,95,46,0.4); background: rgba(255,95,46,0.07); }
+
+  main { position: relative; z-index: 1; padding-top: 62px; }
+
+  .page { display: none; }
+  .page.active { display: block; animation: fadeUp 0.35s ease both; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── HERO ── */
+  .hero-wrap { max-width: 1080px; margin: 0 auto; padding: 5rem 2rem 3rem; }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0.28rem 0.85rem;
+    border: 1px solid var(--accent);
+    border-radius: 2px;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 1.4rem;
+  }
+
+  .pill-dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: blink 1.4s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+  h1 { font-size: clamp(2.2rem, 5.5vw, 4rem); font-weight: 800; line-height: 1.07; letter-spacing: -0.02em; }
+  h1 .hl { color: var(--accent); }
+  .hero-sub { margin-top: 1.1rem; color: var(--muted); font-size: 1rem; line-height: 1.75; max-width: 500px; }
+
+  .cta-row { display: flex; gap: 0.8rem; margin-top: 2.2rem; flex-wrap: wrap; }
+
+  .btn { border: none; cursor: pointer; font-family: 'Syne', sans-serif; font-weight: 700; border-radius: 6px; transition: all 0.2s; }
+  .btn-fill { padding: 0.75rem 1.8rem; background: var(--accent); color: #fff; font-size: 0.92rem; }
+  .btn-fill:hover { box-shadow: 0 6px 20px rgba(255,95,46,0.4); transform: translateY(-2px); }
+  .btn-ghost { padding: 0.75rem 1.8rem; background: transparent; color: var(--text); border: 1px solid var(--border); font-size: 0.92rem; }
+  .btn-ghost:hover { border-color: var(--muted); transform: translateY(-2px); }
+
+  .stat-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px;
+    background: var(--border); border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden; margin: 3rem 0 0;
+  }
+
+  .stat-box { background: var(--card); padding: 1.4rem 1.6rem; transition: background 0.2s; }
+  .stat-box:hover { background: var(--surface); }
+  .stat-val { font-family: 'Space Mono', monospace; font-size: 1.8rem; font-weight: 700; color: var(--accent2); }
+  .stat-lbl { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.2rem; }
+
+  .feat-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+    background: var(--border); border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden; margin-top: 3rem;
+  }
+
+  .feat { background: var(--card); padding: 1.6rem; transition: background 0.2s; }
+  .feat:hover { background: var(--surface); }
+  .feat-icon { font-size: 1.6rem; margin-bottom: 0.6rem; }
+  .feat h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.3rem; }
+  .feat p { font-size: 0.78rem; color: var(--muted); line-height: 1.6; }
+
+  /* ── SECTION ── */
+  .sec-wrap { max-width: 860px; margin: 0 auto; padding: 2.5rem 2rem 5rem; }
+  .sec-head { margin-bottom: 1.8rem; }
+  .sec-title { font-size: 1.5rem; font-weight: 800; display: flex; align-items: center; gap: 0.6rem; }
+  .sec-icon { width: 34px; height: 34px; background: var(--accent); border-radius: 6px; display: grid; place-items: center; font-size: 0.9rem; }
+  .sec-sub { margin-top: 0.3rem; font-family: 'Space Mono', monospace; font-size: 0.75rem; color: var(--muted); }
+
+  /* ── FORM ── */
+  .form-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 2rem;
+    position: relative; overflow: hidden;
+  }
+
+  .form-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2), transparent);
+  }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem; }
+  .fg { display: flex; flex-direction: column; gap: 0.35rem; }
+  .fg.full { grid-column: 1 / -1; }
+
+  label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-family: 'Space Mono', monospace; }
+
+  input, select, textarea {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 0.65rem 0.85rem;
+    color: var(--text); font-family: 'Syne', sans-serif; font-size: 0.88rem;
+    transition: border-color 0.2s, box-shadow 0.2s; outline: none; width: 100%;
+  }
+
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255,95,46,0.1); }
+  select option { background: var(--surface); }
+  textarea { resize: vertical; min-height: 95px; }
+
+  .upload-zone {
+    border: 2px dashed var(--border); border-radius: 8px; padding: 1.8rem;
+    text-align: center; cursor: pointer; position: relative;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .upload-zone:hover, .upload-zone.over { border-color: var(--accent); background: rgba(255,95,46,0.04); }
+  .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .upload-icon { font-size: 2rem; margin-bottom: 0.4rem; }
+  .upload-hint { font-size: 0.8rem; color: var(--muted); }
+  .upload-hint strong { color: var(--accent); }
+  #filePreview { margin-top: 0.6rem; font-size: 0.75rem; color: var(--accent2); font-family: 'Space Mono', monospace; }
+
+  .submit-btn {
+    margin-top: 1.4rem; width: 100%; padding: 0.9rem;
+    background: var(--accent); border: none; border-radius: 7px;
+    color: #fff; font-family: 'Syne', sans-serif; font-size: 0.95rem; font-weight: 700;
+    cursor: pointer; letter-spacing: 0.04em; transition: all 0.2s;
+  }
+
+  .submit-btn:hover:not(:disabled) { box-shadow: 0 8px 24px rgba(255,95,46,0.4); transform: translateY(-2px); }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .loader {
+    display: none; align-items: center; gap: 0.7rem; margin-top: 1rem;
+    padding: 0.9rem 1rem; background: rgba(255,95,46,0.07);
+    border: 1px solid rgba(255,95,46,0.2); border-radius: 8px;
+    font-family: 'Space Mono', monospace; font-size: 0.8rem; color: var(--accent);
+  }
+
+  .loader.show { display: flex; }
+
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,95,46,0.25); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin 0.75s linear infinite; flex-shrink: 0;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .success-box {
+    display: none; margin-top: 1.4rem;
+    background: rgba(0,229,188,0.06); border: 1px solid rgba(0,229,188,0.35);
+    border-radius: 10px; padding: 1.4rem; animation: fadeUp 0.4s ease;
+  }
+
+  .success-box.show { display: block; }
+  .success-box h3 { color: var(--accent2); font-size: 0.95rem; margin-bottom: 1rem; }
+
+  .ticket-badge {
+    display: inline-block; padding: 0.35rem 1rem;
+    background: var(--accent2); color: #000;
+    font-family: 'Space Mono', monospace; font-weight: 700; font-size: 1.1rem;
+    border-radius: 4px; margin-bottom: 0.8rem;
+  }
+
+  .sr { display: flex; justify-content: space-between; padding: 0.45rem 0; border-bottom: 1px solid var(--border); font-size: 0.84rem; }
+  .sr:last-child { border-bottom: none; }
+  .sr-lbl { color: var(--muted); font-family: 'Space Mono', monospace; font-size: 0.72rem; }
+  .sr-val { color: var(--accent2); font-weight: 600; }
+
+  /* ── TRACK ── */
+  .track-row { display: flex; gap: 0.8rem; margin-bottom: 2rem; }
+  .track-row input { flex: 1; }
+
+  .sec-btn {
+    padding: 0.65rem 1.4rem; background: transparent;
+    border: 1px solid var(--accent); border-radius: 6px;
+    color: var(--accent); font-family: 'Syne', sans-serif;
+    font-size: 0.85rem; font-weight: 700; cursor: pointer;
+    white-space: nowrap; transition: all 0.2s;
+  }
+
+  .sec-btn:hover { background: var(--accent); color: #fff; }
+
+  .tab-row { display: flex; gap: 0.4rem; margin-bottom: 1.4rem; border-bottom: 1px solid var(--border); padding-bottom: 0.6rem; }
+
+  .tab {
+    padding: 0.35rem 0.9rem; border-radius: 4px 4px 0 0;
+    font-size: 0.8rem; font-weight: 700; cursor: pointer;
+    border: none; background: transparent; color: var(--muted);
+    font-family: 'Syne', sans-serif; transition: all 0.2s;
+  }
+
+  .tab.active { color: var(--accent); background: rgba(255,95,46,0.1); }
+  .tab:hover:not(.active) { color: var(--text); }
+
+  /* ── CARDS ── */
+  .issues-list { display: flex; flex-direction: column; gap: 0.8rem; }
+
+  .ic {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1.1rem 1.3rem 1.1rem 1.5rem;
+    position: relative; overflow: hidden;
+    transition: border-color 0.2s, transform 0.15s; cursor: pointer;
+  }
+
+  .ic:hover { border-color: var(--muted); transform: translateX(4px); }
+  .ic::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); }
+  .ic.s-resolved::before { background: var(--accent2); }
+  .ic.s-inprogress::before { background: var(--yellow); }
+  .ic.s-review::before { background: #a78bfa; }
+  .ic.s-closed::before { background: var(--muted); }
+
+  .ic-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.8rem; }
+  .ic-meta { font-family: 'Space Mono', monospace; font-size: 0.68rem; color: var(--muted); margin-bottom: 0.3rem; }
+  .ic-title { font-size: 0.96rem; font-weight: 700; margin-bottom: 0.3rem; }
+  .ic-loc { font-size: 0.78rem; color: var(--muted); }
+
+  .badge {
+    padding: 0.18rem 0.6rem; border-radius: 3px;
+    font-size: 0.67rem; font-family: 'Space Mono', monospace;
+    font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+    white-space: nowrap; flex-shrink: 0;
+  }
+
+  .b-open     { background: rgba(255,95,46,0.12); color: var(--accent); border: 1px solid rgba(255,95,46,0.25); }
+  .b-resolved { background: rgba(0,229,188,0.12); color: var(--accent2); border: 1px solid rgba(0,229,188,0.25); }
+  .b-progress { background: rgba(245,197,24,0.12); color: var(--yellow); border: 1px solid rgba(245,197,24,0.25); }
+  .b-review   { background: rgba(167,139,250,0.12); color: #a78bfa; border: 1px solid rgba(167,139,250,0.25); }
+  .b-closed   { background: rgba(90,90,122,0.12); color: var(--muted); border: 1px solid rgba(90,90,122,0.25); }
+
+  .ic-bottom { display: flex; align-items: center; gap: 1rem; margin-top: 0.7rem; flex-wrap: wrap; }
+
+  .pbar-wrap { display: flex; align-items: center; gap: 0.4rem; }
+  .pbar-lbl { font-size: 0.68rem; color: var(--muted); font-family: 'Space Mono', monospace; }
+  .pbar { width: 80px; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .pbar-fill { height: 100%; background: linear-gradient(90deg, var(--accent2), var(--accent)); border-radius: 2px; }
+
+  .upvote-btn {
+    display: flex; align-items: center; gap: 0.3rem;
+    padding: 0.2rem 0.55rem; background: transparent;
+    border: 1px solid var(--border); border-radius: 4px;
+    color: var(--muted); font-size: 0.72rem;
+    font-family: 'Space Mono', monospace; cursor: pointer; transition: all 0.2s;
+  }
+
+  .upvote-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .chip {
+    padding: 0.12rem 0.45rem; font-size: 0.65rem; border-radius: 20px;
+    border: 1px solid rgba(0,229,188,0.2); color: var(--accent2);
+    background: rgba(0,229,188,0.05); font-family: 'Space Mono', monospace;
+  }
+
+  .ic-date { font-size: 0.68rem; color: var(--muted); font-family: 'Space Mono', monospace; margin-left: auto; }
+
+  .empty { text-align: center; padding: 3rem 1rem; color: var(--muted); }
+  .empty .ei { font-size: 2.8rem; margin-bottom: 0.8rem; opacity: 0.4; }
+  .empty p { font-family: 'Space Mono', monospace; font-size: 0.82rem; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
+    z-index: 500; display: none; align-items: center;
+    justify-content: center; padding: 1rem;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; width: 100%; max-width: 620px;
+    max-height: 90vh; overflow-y: auto; position: relative;
+    animation: fadeUp 0.3s ease;
+  }
+
+  .modal-header {
+    padding: 1.3rem 1.5rem; border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    position: sticky; top: 0; background: var(--card); z-index: 1;
+  }
+
+  .modal-title { font-size: 1rem; font-weight: 700; }
+  .modal-close { background: none; border: none; color: var(--muted); font-size: 1.3rem; cursor: pointer; transition: color 0.2s; }
+  .modal-close:hover { color: var(--text); }
+  .modal-body { padding: 1.5rem; }
+
+  .detail-row { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; gap: 1rem; }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-lbl { color: var(--muted); font-family: 'Space Mono', monospace; font-size: 0.72rem; flex-shrink: 0; }
+  .detail-val { text-align: right; word-break: break-word; }
+
+  .modal-img { width: 100%; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 1.2rem; max-height: 220px; object-fit: cover; }
+
+  .timeline { margin-top: 1.2rem; }
+
+  .tl-item { display: flex; gap: 0.8rem; padding-bottom: 1rem; position: relative; }
+  .tl-item::before { content: ''; position: absolute; left: 9px; top: 20px; bottom: 0; width: 1px; background: var(--border); }
+  .tl-item:last-child::before { display: none; }
+
+  .tl-dot { width: 18px; height: 18px; border-radius: 50%; background: var(--accent); flex-shrink: 0; display: grid; place-items: center; font-size: 0.55rem; margin-top: 2px; }
+  .tl-content { flex: 1; }
+  .tl-status { font-size: 0.82rem; font-weight: 700; }
+  .tl-note { font-size: 0.75rem; color: var(--muted); margin-top: 0.2rem; }
+  .tl-date { font-size: 0.68rem; color: var(--muted); font-family: 'Space Mono', monospace; margin-top: 0.15rem; }
+
+  .comments-section { margin-top: 1.5rem; }
+  .comments-title { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .comment-item { background: var(--surface); border-radius: 6px; padding: 0.7rem 0.9rem; margin-bottom: 0.5rem; }
+  .comment-author { font-size: 0.75rem; font-weight: 700; color: var(--accent2); margin-bottom: 0.2rem; }
+  .comment-text { font-size: 0.82rem; line-height: 1.5; }
+  .comment-date { font-size: 0.65rem; color: var(--muted); font-family: 'Space Mono', monospace; margin-top: 0.2rem; }
+  .comment-form { display: flex; gap: 0.6rem; margin-top: 0.8rem; flex-wrap: wrap; }
+  .comment-form input { flex: 0 0 140px; }
+  .comment-form textarea { flex: 1; min-width: 150px; min-height: 40px; resize: none; }
+
+  .comment-submit {
+    padding: 0.5rem 1rem; background: var(--accent); border: none;
+    border-radius: 6px; color: #fff; font-family: 'Syne', sans-serif;
+    font-size: 0.8rem; font-weight: 700; cursor: pointer; align-self: flex-end; transition: all 0.2s;
+  }
+
+  .comment-submit:hover { box-shadow: 0 4px 12px rgba(255,95,46,0.35); }
+
+  /* ── DASHBOARD ── */
+  .dash-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem; margin-bottom: 1.8rem; }
+
+  .dash-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 1.2rem 1.4rem; position: relative; overflow: hidden;
+  }
+
+  .dash-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+  .dash-card.c1::before { background: var(--accent); }
+  .dash-card.c2::before { background: #a78bfa; }
+  .dash-card.c3::before { background: var(--yellow); }
+  .dash-card.c4::before { background: var(--accent2); }
+
+  .dash-num { font-family: 'Space Mono', monospace; font-size: 2rem; font-weight: 700; line-height: 1; }
+  .c1 .dash-num { color: var(--accent); }
+  .c2 .dash-num { color: #a78bfa; }
+  .c3 .dash-num { color: var(--yellow); }
+  .c4 .dash-num { color: var(--accent2); }
+  .dash-lbl { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.3rem; }
+
+  .chart-section { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1.4rem; margin-bottom: 1rem; }
+  .chart-title { font-size: 0.85rem; font-weight: 700; margin-bottom: 1.2rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; }
+  .bar-chart { display: flex; flex-direction: column; gap: 0.6rem; }
+  .bar-row { display: flex; align-items: center; gap: 0.8rem; }
+  .bar-label { font-size: 0.75rem; color: var(--muted); white-space: nowrap; min-width: 120px; font-family: 'Space Mono', monospace; }
+  .bar-track { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent2), var(--accent)); border-radius: 4px; transition: width 0.8s ease; }
+  .bar-count { font-size: 0.72rem; color: var(--muted); font-family: 'Space Mono', monospace; min-width: 24px; text-align: right; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 2rem; right: 2rem;
+    padding: 0.85rem 1.3rem; border-radius: 8px;
+    font-family: 'Space Mono', monospace; font-size: 0.78rem;
+    z-index: 999; transform: translateY(80px); opacity: 0;
+    transition: all 0.3s; max-width: 300px; line-height: 1.5;
+  }
+
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.ok  { background: rgba(0,229,188,0.12); border: 1px solid var(--accent2); color: var(--accent2); }
+  .toast.err { background: rgba(255,95,46,0.12); border: 1px solid var(--accent); color: var(--accent); }
+
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 680px) {
+    header { padding: 0 1rem; }
+    .nav-btn { padding: 0.35rem 0.6rem; font-size: 0.72rem; }
+    .hero-wrap, .sec-wrap { padding-left: 1rem; padding-right: 1rem; }
+    .form-grid { grid-template-columns: 1fr; }
+    .feat-grid { grid-template-columns: 1fr; }
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+    .dash-grid { grid-template-columns: 1fr 1fr; }
+    .track-row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo" onclick="showPage('home')">
+    <div class="logo-hex">AI</div>
+    CivicAI
+  </div>
+  <nav>
+    <button class="nav-btn active" onclick="showPage('home')">Home</button>
+    <button class="nav-btn" onclick="showPage('report')">Report</button>
+    <button class="nav-btn" onclick="showPage('track')">Track</button>
+    <button class="nav-btn" onclick="showPage('dashboard')">Dashboard</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- HOME -->
+  <div id="pg-home" class="page active">
+    <div class="hero-wrap">
+      <div class="pill"><span class="pill-dot"></span>AI-Powered Civic Intelligence</div>
+      <h1>Fix Your City<br>With <span class="hl">One Report</span></h1>
+      <p class="hero-sub">Submit civic issues and our AI instantly classifies, prioritizes, and routes your complaint to the right municipal authority — automatically.</p>
+      <div class="cta-row">
+        <button class="btn btn-fill" onclick="showPage('report')">Report an Issue →</button>
+        <button class="btn btn-ghost" onclick="showPage('track')">Track My Complaint</button>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="stat-val" id="hs-total">—</div><div class="stat-lbl">Total Issues</div></div>
+        <div class="stat-box"><div class="stat-val" id="hs-open">—</div><div class="stat-lbl">Open</div></div>
+        <div class="stat-box"><div class="stat-val" id="hs-progress">—</div><div class="stat-lbl">In Progress</div></div>
+        <div class="stat-box"><div class="stat-val" id="hs-resolved">—</div><div class="stat-lbl">Resolved</div></div>
+      </div>
+    </div>
+    <div style="max-width:1080px;margin:0 auto;padding:0 2rem 4rem;">
+      <div class="feat-grid">
+        <div class="feat"><div class="feat-icon">🧠</div><h3>AI Text Classification</h3><p>Zero-shot NLP categorizes your description into the correct civic category with high confidence.</p></div>
+        <div class="feat"><div class="feat-icon">📸</div><h3>Image Analysis</h3><p>Upload a photo and our vision model cross-validates your complaint using computer vision.</p></div>
+        <div class="feat"><div class="feat-icon">⚡</div><h3>Smart Prioritization</h3><p>Severity scoring plus community upvotes ensures critical issues get immediate attention.</p></div>
+        <div class="feat"><div class="feat-icon">📍</div><h3>Ward-Level Routing</h3><p>Each complaint is automatically assigned to the correct municipal ward.</p></div>
+        <div class="feat"><div class="feat-icon">🔄</div><h3>Status Timeline</h3><p>Track every change from Open → In Progress → Resolved with full audit history.</p></div>
+        <div class="feat"><div class="feat-icon">💬</div><h3>Public Comments</h3><p>Citizens can add updates and authorities can post resolutions directly on complaints.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REPORT -->
+  <div id="pg-report" class="page">
+    <div class="sec-wrap">
+      <div class="sec-head">
+        <div class="sec-title"><div class="sec-icon">📝</div> Report a Civic Issue</div>
+        <div class="sec-sub">// AI will classify and prioritize your issue automatically</div>
+      </div>
+      <div class="form-card">
+        <form id="reportForm">
+          <div class="form-grid">
+            <div class="fg"><label>Full Name *</label><input type="text" name="name" placeholder="Rajesh Kumar" required></div>
+            <div class="fg"><label>Phone Number *</label><input type="tel" name="phone" placeholder="9876543210" required></div>
+            <div class="fg"><label>Email (optional)</label><input type="email" name="email" placeholder="you@email.com"></div>
+            <div class="fg">
+              <label>Issue Type *</label>
+              <select name="issue_type" required>
+                <option value="" disabled selected>Select category</option>
+                <option value="Road">🛣️ Road Damage</option>
+                <option value="Garbage">🗑️ Garbage & Sanitation</option>
+                <option value="Water">💧 Water Supply & Leakage</option>
+                <option value="Electricity">⚡ Electrical Problem</option>
+                <option value="Street Light">💡 Street Light Issue</option>
+                <option value="Sewage">🚿 Sewage & Drainage</option>
+                <option value="Public Property">🏛️ Public Property Damage</option>
+                <option value="Noise">🔊 Noise Complaint</option>
+              </select>
+            </div>
+            <div class="fg"><label>Ward Number *</label><input type="text" name="ward_number" placeholder="Ward 42" required></div>
+            <div class="fg"><label>Area / Locality *</label><input type="text" name="area_name" placeholder="Anna Nagar West" required></div>
+            <div class="fg"><label>City *</label><input type="text" name="city" placeholder="Chennai" required></div>
+            <div class="fg"><label>Pincode *</label><input type="text" name="pincode" placeholder="600040" required></div>
+            <div class="fg full"><label>Landmark (optional)</label><input type="text" name="landmark" placeholder="Near main bus stand, opposite temple…"></div>
+            <div class="fg full">
+              <label>Upload Photo *</label>
+              <div class="upload-zone" id="uploadZone">
+                <input type="file" id="imgInput" name="image" accept="image/*" required>
+                <div class="upload-icon">📷</div>
+                <div class="upload-hint">Drag & drop or <strong>click to upload</strong></div>
+                <div id="filePreview">No file selected</div>
+              </div>
+            </div>
+            <div class="fg full"><label>Description *</label><textarea name="description" placeholder="Describe the issue — location, severity, how long it has been there…" required></textarea></div>
+          </div>
+          <button type="submit" class="submit-btn" id="submitBtn">🚀 Submit Issue</button>
+        </form>
+        <div class="loader" id="loader"><div class="spinner"></div><span>AI is analyzing your complaint…</span></div>
+        <div class="success-box" id="successBox">
+          <h3>✅ Issue Submitted Successfully</h3>
+          <div class="ticket-badge" id="successTicket">—</div>
+          <p style="font-size:0.78rem;color:var(--muted);margin-bottom:0.8rem;font-family:'Space Mono',monospace;">Save this ticket ID to track your issue anytime</p>
+          <div class="sr"><span class="sr-lbl">AI Category</span><span class="sr-val" id="sr-cat">—</span></div>
+          <div class="sr"><span class="sr-lbl">Status</span><span class="sr-val">Open</span></div>
+          <div class="sr"><span class="sr-lbl">Priority Score</span><span class="sr-val" id="sr-prio">—</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRACK -->
+  <div id="pg-track" class="page">
+    <div class="sec-wrap">
+      <div class="sec-head">
+        <div class="sec-title"><div class="sec-icon">🔍</div> Track Complaints</div>
+        <div class="sec-sub">// Search by phone number or ticket ID</div>
+      </div>
+      <div class="tab-row">
+        <button class="tab active" id="tab-phone" onclick="switchTab('phone')">By Phone Number</button>
+        <button class="tab" id="tab-ticket" onclick="switchTab('ticket')">By Ticket ID</button>
+      </div>
+      <div id="search-phone">
+        <div class="track-row">
+          <input type="tel" id="trackPhone" placeholder="Enter your registered phone number">
+          <button class="sec-btn" onclick="trackByPhone()">Search →</button>
+        </div>
+      </div>
+      <div id="search-ticket" style="display:none">
+        <div class="track-row">
+          <input type="text" id="trackTicket" placeholder="e.g. CIV-0042" style="text-transform:uppercase">
+          <button class="sec-btn" onclick="trackByTicket()">Search →</button>
+        </div>
+      </div>
+      <div id="issuesContainer">
+        <div class="empty"><div class="ei">📡</div><p>Enter your phone or ticket ID to find complaints</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="pg-dashboard" class="page">
+    <div class="sec-wrap">
+      <div class="sec-head">
+        <div class="sec-title"><div class="sec-icon">📊</div> Public Dashboard</div>
+        <div class="sec-sub">// Live overview of civic issues</div>
+      </div>
+      <div class="dash-grid">
+        <div class="dash-card c1"><div class="dash-num" id="d-total">—</div><div class="dash-lbl">Total Issues</div></div>
+        <div class="dash-card c2"><div class="dash-num" id="d-open">—</div><div class="dash-lbl">Open</div></div>
+        <div class="dash-card c3"><div class="dash-num" id="d-progress">—</div><div class="dash-lbl">In Progress</div></div>
+        <div class="dash-card c4"><div class="dash-num" id="d-resolved">—</div><div class="dash-lbl">Resolved</div></div>
+      </div>
+      <div class="chart-section"><div class="chart-title">Issues by Type</div><div class="bar-chart" id="typeChart"></div></div>
+      <div class="chart-section"><div class="chart-title">Top Wards by Volume</div><div class="bar-chart" id="wardChart"></div></div>
+      <div style="margin-top:2rem;margin-bottom:1rem;">
+        <div class="sec-title" style="font-size:1.1rem">Recent Issues</div>
+      </div>
+      <div id="publicIssues"><div class="empty"><div class="ei">⏳</div><p>Loading…</p></div></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Issue Details</div>
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody">Loading…</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG — change to your Render URL when deployed ──────────────────────
+const BASE = 'http://localhost:8000';
+// Example: const BASE = 'https://your-app-name.onrender.com';
+
+// ── ROUTING ───────────────────────────────────────────────────────────────
+const PAGES = ['home','report','track','dashboard'];
+
+function showPage(name) {
+  PAGES.forEach(p => document.getElementById('pg-'+p).classList.toggle('active', p===name));
+  document.querySelectorAll('.nav-btn').forEach((b,i) => b.classList.toggle('active', PAGES[i]===name));
+  if (name==='home') loadHeroStats();
+  if (name==='dashboard') loadDashboard();
+}
+
+function switchTab(t) {
+  document.getElementById('search-phone').style.display  = t==='phone'  ? 'block' : 'none';
+  document.getElementById('search-ticket').style.display = t==='ticket' ? 'block' : 'none';
+  document.getElementById('tab-phone').classList.toggle('active', t==='phone');
+  document.getElementById('tab-ticket').classList.toggle('active', t==='ticket');
+}
+
+// ── FILE UPLOAD ───────────────────────────────────────────────────────────
+const imgInput   = document.getElementById('imgInput');
+const uploadZone = document.getElementById('uploadZone');
+const filePreview = document.getElementById('filePreview');
+
+imgInput.addEventListener('change', () => {
+  filePreview.textContent = imgInput.files[0]?.name || 'No file selected';
+});
+
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault(); uploadZone.classList.remove('over');
+  if (e.dataTransfer.files[0]) { imgInput.files = e.dataTransfer.files; filePreview.textContent = e.dataTransfer.files[0].name; }
+});
+
+// ── REPORT ────────────────────────────────────────────────────────────────
+document.getElementById('reportForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  const loader = document.getElementById('loader');
+  const success = document.getElementById('successBox');
+
+  btn.disabled = true;
+  loader.classList.add('show');
+  success.classList.remove('show');
+
+  try {
+    const res  = await fetch(`${BASE}/report-with-ai`, { method:'POST', body: new FormData(e.target) });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Submission failed');
+
+    document.getElementById('successTicket').textContent = data.ticket_id;
+    document.getElementById('sr-cat').textContent        = data.ai_text_category || '—';
+    document.getElementById('sr-prio').textContent       = data.priority_score   || '—';
+
+    success.classList.add('show');
+    e.target.reset();
+    filePreview.textContent = 'No file selected';
+    toast('Issue submitted! Ticket: ' + data.ticket_id, 'ok');
+  } catch(err) {
+    toast(err.message || 'Server error. Is the backend running?', 'err');
+  } finally {
+    btn.disabled = false;
+    loader.classList.remove('show');
+  }
+});
+
+// ── TRACK ─────────────────────────────────────────────────────────────────
+async function trackByPhone() {
+  const phone = document.getElementById('trackPhone').value.trim();
+  if (!phone) { toast('Enter a phone number','err'); return; }
+  setTrackLoading();
+  try {
+    const res    = await fetch(`${BASE}/track/${encodeURIComponent(phone)}`);
+    const issues = await res.json();
+    renderIssueList(issues);
+  } catch { setTrackError(); }
+}
+
+async function trackByTicket() {
+  const tid = document.getElementById('trackTicket').value.trim().toUpperCase();
+  if (!tid) { toast('Enter a ticket ID','err'); return; }
+  setTrackLoading();
+  try {
+    const res = await fetch(`${BASE}/ticket/${tid}`);
+    if (!res.ok) throw new Error();
+    const issue = await res.json();
+    renderIssueList([issue]);
+  } catch { setTrackError('Ticket not found'); }
+}
+
+document.getElementById('trackPhone').addEventListener('keydown', e => { if(e.key==='Enter') trackByPhone(); });
+document.getElementById('trackTicket').addEventListener('keydown', e => { if(e.key==='Enter') trackByTicket(); });
+
+function setTrackLoading() {
+  document.getElementById('issuesContainer').innerHTML =
+    '<div class="loader show" style="margin:0"><div class="spinner"></div><span>Fetching issues…</span></div>';
+}
+
+function setTrackError(msg='Could not connect to server') {
+  document.getElementById('issuesContainer').innerHTML =
+    `<div class="empty"><div class="ei">⚠️</div><p>${msg}</p></div>`;
+}
+
+function renderIssueList(issues) {
+  const c = document.getElementById('issuesContainer');
+  if (!issues || !issues.length) {
+    c.innerHTML = '<div class="empty"><div class="ei">🔎</div><p>No issues found</p></div>';
+    return;
+  }
+  c.innerHTML = `<div class="issues-list">${issues.map(renderCard).join('')}</div>`;
+}
+
+function statusCls(s) {
+  return {'Under Review':'s-review','In Progress':'s-inprogress','Resolved':'s-resolved','Closed':'s-closed'}[s] || '';
+}
+
+function badgeCls(s) {
+  return {'Open':'b-open','Under Review':'b-review','In Progress':'b-progress','Resolved':'b-resolved','Closed':'b-closed'}[s] || 'b-open';
+}
+
+function renderCard(issue) {
+  const pct  = Math.min((issue.priority_score||0)*14.28,100).toFixed(0);
+  const date = issue.created_at ? new Date(issue.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : '—';
+
+  return `
+  <div class="ic ${statusCls(issue.status)}" onclick="openModal(${issue.id})">
+    <div class="ic-top">
+      <div>
+        <div class="ic-meta">${issue.ticket_id||'#'+issue.id} · ${date}</div>
+        <div class="ic-title">${issue.issue_type||'Unknown'}</div>
+        <div class="ic-loc">📍 ${[issue.area_name,issue.city].filter(Boolean).join(', ')} · Ward ${issue.ward_number||'—'}</div>
+      </div>
+      <span class="badge ${badgeCls(issue.status)}">${issue.status||'Open'}</span>
+    </div>
+    <div class="ic-bottom">
+      ${issue.ai_text_category ? `<span class="chip">🧠 ${issue.ai_text_category}</span>` : ''}
+      <div class="pbar-wrap">
+        <span class="pbar-lbl">Priority</span>
+        <div class="pbar"><div class="pbar-fill" style="width:${pct}%"></div></div>
+        <span class="pbar-lbl">${issue.priority_score?.toFixed(1)||'—'}</span>
+      </div>
+      <button class="upvote-btn" onclick="upvote(event,${issue.id},this)">▲ <span>${issue.upvotes||0}</span></button>
+      <span class="ic-date">${date}</span>
+    </div>
+  </div>`;
+}
+
+// ── UPVOTE ────────────────────────────────────────────────────────────────
+async function upvote(e, id, btn) {
+  e.stopPropagation();
+  try {
+    const res  = await fetch(`${BASE}/upvote/${id}`,{method:'POST'});
+    const data = await res.json();
+    btn.querySelector('span').textContent = data.upvotes;
+    btn.style.color = 'var(--accent)';
+    btn.disabled = true;
+    toast('Upvoted!','ok');
+  } catch { toast('Failed to upvote','err'); }
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────
+let _cachedIssues = [];
+
+async function openModal(id) {
+  document.getElementById('modalOverlay').classList.add('open');
+  document.getElementById('modalBody').innerHTML =
+    '<div class="loader show"><div class="spinner"></div><span>Loading…</span></div>';
+
+  try {
+    if (!_cachedIssues.length) {
+      const r = await fetch(`${BASE}/public-issues?limit=500`);
+      _cachedIssues = await r.json();
+    }
+
+    const issue = _cachedIssues.find(i => i.id === id);
+
+    const [histRes, commRes] = await Promise.all([
+      fetch(`${BASE}/history/${id}`),
+      fetch(`${BASE}/comments/${id}`),
+    ]);
+
+    const history  = await histRes.json();
+    const comments = await commRes.json();
+
+    if (!issue) throw new Error('Issue not found');
+
+    document.getElementById('modalTitle').textContent = `${issue.ticket_id} — ${issue.issue_type}`;
+
+    const imgHTML = issue.image_path
+      ? `<img class="modal-img" src="${BASE}${issue.image_path}" alt="Issue" onerror="this.style.display='none'">`
+      : '';
+
+    const tlHTML = history.map(h => `
+      <div class="tl-item">
+        <div class="tl-dot">●</div>
+        <div class="tl-content">
+          <div class="tl-status">${h.new_status}</div>
+          ${h.note ? `<div class="tl-note">${h.note}</div>` : ''}
+          <div class="tl-date">${new Date(h.changed_at).toLocaleString('en-IN')}</div>
+        </div>
+      </div>`).join('');
+
+    const commHTML = comments.map(c => `
+      <div class="comment-item">
+        <div class="comment-author">${c.author}</div>
+        <div class="comment-text">${c.content}</div>
+        <div class="comment-date">${new Date(c.created_at).toLocaleString('en-IN')}</div>
+      </div>`).join('') || '<p style="font-size:0.8rem;color:var(--muted)">No comments yet.</p>';
+
+    document.getElementById('modalBody').innerHTML = `
+      ${imgHTML}
+      <div class="detail-row"><span class="detail-lbl">Status</span><span class="detail-val"><span class="badge ${badgeCls(issue.status)}">${issue.status}</span></span></div>
+      <div class="detail-row"><span class="detail-lbl">Category</span><span class="detail-val">${issue.issue_type}</span></div>
+      <div class="detail-row"><span class="detail-lbl">Location</span><span class="detail-val">${[issue.area_name,issue.city,issue.pincode].filter(Boolean).join(', ')}</span></div>
+      <div class="detail-row"><span class="detail-lbl">Ward</span><span class="detail-val">Ward ${issue.ward_number}</span></div>
+      ${issue.landmark ? `<div class="detail-row"><span class="detail-lbl">Landmark</span><span class="detail-val">${issue.landmark}</span></div>` : ''}
+      <div class="detail-row"><span class="detail-lbl">Priority Score</span><span class="detail-val">${issue.priority_score?.toFixed(2)||'—'}</span></div>
+      <div class="detail-row"><span class="detail-lbl">Upvotes</span><span class="detail-val">${issue.upvotes||0}</span></div>
+      ${issue.assigned_to ? `<div class="detail-row"><span class="detail-lbl">Assigned To</span><span class="detail-val">${issue.assigned_to}</span></div>` : ''}
+      ${issue.resolution_note ? `<div class="detail-row"><span class="detail-lbl">Resolution</span><span class="detail-val">${issue.resolution_note}</span></div>` : ''}
+      <div class="detail-row"><span class="detail-lbl">Submitted</span><span class="detail-val">${new Date(issue.created_at).toLocaleString('en-IN')}</span></div>
+      <div style="margin-top:1rem;font-size:0.82rem;line-height:1.6;color:var(--muted);padding:0.8rem;background:var(--surface);border-radius:6px;">${issue.description}</div>
+      <div class="timeline" style="margin-top:1.5rem">
+        <div class="comments-title">Status Timeline</div>
+        ${tlHTML}
+      </div>
+      <div class="comments-section">
+        <div class="comments-title">Comments</div>
+        <div id="commentsArea">${commHTML}</div>
+        <div class="comment-form">
+          <input type="text" id="cAuthor" placeholder="Your name">
+          <textarea id="cText" placeholder="Add a comment…"></textarea>
+          <button class="comment-submit" onclick="postComment(${id})">Post</button>
+        </div>
+      </div>`;
+  } catch {
+    document.getElementById('modalBody').innerHTML =
+      '<div class="empty"><div class="ei">⚠️</div><p>Could not load details</p></div>';
+  }
+}
+
+async function postComment(issueId) {
+  const author  = document.getElementById('cAuthor').value.trim();
+  const content = document.getElementById('cText').value.trim();
+  if (!author || !content) { toast('Fill in name and comment','err'); return; }
+  try {
+    const res  = await fetch(`${BASE}/comment/${issueId}`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({author, content}),
+    });
+    const data = await res.json();
+    document.getElementById('commentsArea').innerHTML += `
+      <div class="comment-item">
+        <div class="comment-author">${data.author}</div>
+        <div class="comment-text">${data.content}</div>
+        <div class="comment-date">Just now</div>
+      </div>`;
+    document.getElementById('cAuthor').value = '';
+    document.getElementById('cText').value   = '';
+    toast('Comment posted','ok');
+  } catch { toast('Failed to post comment','err'); }
+}
+
+function closeModal(e) { if(e.target===document.getElementById('modalOverlay')) closeModalDirect(); }
+function closeModalDirect() { document.getElementById('modalOverlay').classList.remove('open'); }
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeModalDirect(); });
+
+// ── STATS / DASHBOARD ─────────────────────────────────────────────────────
+async function loadHeroStats() {
+  try {
+    const res  = await fetch(`${BASE}/stats`);
+    const data = await res.json();
+    document.getElementById('hs-total').textContent    = data.total;
+    document.getElementById('hs-open').textContent     = data.open;
+    document.getElementById('hs-progress').textContent = data.in_progress;
+    document.getElementById('hs-resolved').textContent = data.resolved;
+  } catch {}
+}
+
+async function loadDashboard() {
+  _cachedIssues = [];
+  try {
+    const [sRes, iRes] = await Promise.all([
+      fetch(`${BASE}/stats`),
+      fetch(`${BASE}/public-issues?limit=10`),
+    ]);
+    const stats  = await sRes.json();
+    const issues = await iRes.json();
+
+    document.getElementById('d-total').textContent    = stats.total;
+    document.getElementById('d-open').textContent     = stats.open;
+    document.getElementById('d-progress').textContent = stats.in_progress;
+    document.getElementById('d-resolved').textContent = stats.resolved;
+
+    const maxT = Math.max(...stats.by_type.map(x=>x.count),1);
+    document.getElementById('typeChart').innerHTML = stats.by_type.map(x=>`
+      <div class="bar-row">
+        <span class="bar-label">${x.type}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${(x.count/maxT*100).toFixed(0)}%"></div></div>
+        <span class="bar-count">${x.count}</span>
+      </div>`).join('') || '<p style="color:var(--muted);font-size:0.8rem">No data yet</p>';
+
+    const maxW = Math.max(...stats.by_ward.map(x=>x.count),1);
+    document.getElementById('wardChart').innerHTML = stats.by_ward.map(x=>`
+      <div class="bar-row">
+        <span class="bar-label">Ward ${x.ward}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${(x.count/maxW*100).toFixed(0)}%"></div></div>
+        <span class="bar-count">${x.count}</span>
+      </div>`).join('') || '<p style="color:var(--muted);font-size:0.8rem">No data yet</p>';
+
+    document.getElementById('publicIssues').innerHTML = issues.length
+      ? `<div class="issues-list">${issues.map(renderCard).join('')}</div>`
+      : '<div class="empty"><div class="ei">📭</div><p>No issues yet</p></div>';
+
+  } catch {
+    document.getElementById('publicIssues').innerHTML =
+      '<div class="empty"><div class="ei">⚠️</div><p>Could not load dashboard</p></div>';
+  }
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────
+function toast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className   = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+loadHeroStats();
+</script>
+</body>
+</html>
